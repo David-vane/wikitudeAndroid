@@ -1,4 +1,4 @@
-package com.practica.wikitude;
+ package com.practica.wikitude;
 
 import android.Manifest;
 import android.app.Activity;
@@ -18,7 +18,6 @@ import com.wikitude.tracker.ImageTarget;
 import com.wikitude.tracker.ImageTracker;
 import com.wikitude.tracker.ImageTrackerListener;
 import com.wikitude.tracker.TargetCollectionResource;
-import com.wikitude.tracker.TargetCollectionResourceLoadingCallback;
 
 import jv.dl.vuforia.wikitude.rendering.external.CustomSurfaceView;
 import jv.dl.vuforia.wikitude.rendering.external.Driver;
@@ -26,9 +25,7 @@ import jv.dl.vuforia.wikitude.rendering.external.GLRenderer;
 import jv.dl.vuforia.wikitude.rendering.external.StrokedRectangle;
 import jv.dl.vuforia.wikitude.util.DropDownAlert;
 
-import static android.content.ContentValues.TAG;
-
-public class MainActivity extends Activity implements ImageTrackerListener, ExternalRendering {
+public class AuxMainActivity extends Activity implements ImageTrackerListener, ExternalRendering {
 
     private WikitudeSDK wikitudeSDK;
     private TargetCollectionResource targetCollectionResource;
@@ -54,6 +51,19 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
         wikitudeSDK.onCreate(getApplicationContext(), this, startupConfiguration);
 
         targetCollectionResource = wikitudeSDK.getTrackerManager().createTargetCollectionResource("file:///android_asset/magazine.wtc");
+
+//        targetCollectionResource = wikitudeSDK.getTrackerManager().createTargetCollectionResource("file:///android_asset/magazine.wtc", new TargetCollectionResourceLoadingCallback() {
+//
+//            @Override
+//            public void onError(WikitudeError wikitudeError) {
+//                Log.v(TAG, "Error load targetCollection " + wikitudeError.getMessage());
+//            }
+//
+//            @Override
+//            public void onFinish() {
+//                wikitudeSDK.getTrackerManager().createImageTracker(targetCollectionResource, MainActivity.this, null);
+//            }
+//        });
 
         Log.v(TAG, "Load tracker");
 
@@ -89,6 +99,7 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
             Log.i(TAG,"Permiso dado");
             wikitudeSDK.getTrackerManager().createImageTracker(targetCollectionResource, this, null);
         }
+
 
 
         dropDownAlert = new DropDownAlert(this);
@@ -158,9 +169,6 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
 
             strokedRectangle.setXScale(target.getTargetScale().x);
             strokedRectangle.setYScale(target.getTargetScale().y);
-
-            Log.v(TAG, "X: " + target.getTargetScale().x+" Y: "+target.getTargetScale().x);
-
         }
     }
 

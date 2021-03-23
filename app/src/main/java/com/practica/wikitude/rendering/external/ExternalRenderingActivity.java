@@ -1,12 +1,4 @@
-package com.practica.wikitude;
-
-import android.Manifest;
-import android.app.Activity;
-import android.content.pm.PackageManager;
-import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.util.Log;
+package com.practica.wikitude.rendering.external;
 
 import com.wikitude.NativeStartupConfiguration;
 import com.wikitude.WikitudeSDK;
@@ -14,82 +6,42 @@ import com.wikitude.common.WikitudeError;
 import com.wikitude.common.camera.CameraSettings;
 import com.wikitude.common.rendering.RenderExtension;
 import com.wikitude.rendering.ExternalRendering;
+import jv.dl.vuforia.wikitude.WikitudeSDKConstants;
+import jv.dl.vuforia.wikitude.util.DropDownAlert;
 import com.wikitude.tracker.ImageTarget;
 import com.wikitude.tracker.ImageTracker;
 import com.wikitude.tracker.ImageTrackerListener;
 import com.wikitude.tracker.TargetCollectionResource;
-import com.wikitude.tracker.TargetCollectionResourceLoadingCallback;
 
-import jv.dl.vuforia.wikitude.rendering.external.CustomSurfaceView;
-import jv.dl.vuforia.wikitude.rendering.external.Driver;
-import jv.dl.vuforia.wikitude.rendering.external.GLRenderer;
-import jv.dl.vuforia.wikitude.rendering.external.StrokedRectangle;
-import jv.dl.vuforia.wikitude.util.DropDownAlert;
+import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
 
-import static android.content.ContentValues.TAG;
+public class ExternalRenderingActivity extends Activity implements ImageTrackerListener, ExternalRendering {
 
-public class MainActivity extends Activity implements ImageTrackerListener, ExternalRendering {
+    private static final String TAG = "ExternalRendering";
 
     private WikitudeSDK wikitudeSDK;
-    private TargetCollectionResource targetCollectionResource;
     private CustomSurfaceView customSurfaceView;
     private Driver driver;
     private GLRenderer glRenderer;
 
     private DropDownAlert dropDownAlert;
 
-    private String TAG = "MainActivity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        setContentView(R.layout.activity_main);
 
         wikitudeSDK = new WikitudeSDK(this);
+
         NativeStartupConfiguration startupConfiguration = new NativeStartupConfiguration();
         startupConfiguration.setLicenseKey(WikitudeSDKConstants.WIKITUDE_SDK_KEY);
         startupConfiguration.setCameraPosition(CameraSettings.CameraPosition.BACK);
         startupConfiguration.setCameraResolution(CameraSettings.CameraResolution.AUTO);
-
         wikitudeSDK.onCreate(getApplicationContext(), this, startupConfiguration);
 
-        targetCollectionResource = wikitudeSDK.getTrackerManager().createTargetCollectionResource("file:///android_asset/magazine.wtc");
-
-        Log.v(TAG, "Load tracker");
-
-
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.CAMERA)) {
-
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                Log.i(TAG,"NPI");
-            } else {
-                Log.i(TAG,"!NPI");
-                // No explanation needed, we can request the permission.
-
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.CAMERA},
-                        5);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-                wikitudeSDK.getTrackerManager().createImageTracker(targetCollectionResource, this, null);
-            }
-            Log.i(TAG,"Permiso no dado");
-        }else{
-            Log.i(TAG,"Permiso dado");
-            wikitudeSDK.getTrackerManager().createImageTracker(targetCollectionResource, this, null);
-        }
-
+        final TargetCollectionResource targetCollectionResource = wikitudeSDK.getTrackerManager().createTargetCollectionResource("file:///android_asset/magazine.wtc");
+        wikitudeSDK.getTrackerManager().createImageTracker(targetCollectionResource, ExternalRenderingActivity.this, null);
 
         dropDownAlert = new DropDownAlert(this);
         dropDownAlert.setText("Scan Target #1 (surfer):");
@@ -117,7 +69,6 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        wikitudeSDK.clearCache();
         wikitudeSDK.onDestroy();
     }
 
@@ -125,7 +76,7 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
     public void onRenderExtensionCreated(final RenderExtension renderExtension) {
         glRenderer = new GLRenderer(renderExtension);
         wikitudeSDK.getCameraManager().setRenderingCorrectedFovChangedListener(glRenderer);
-        customSurfaceView = new CustomSurfaceView(getApplicationContext(), glRenderer);
+        customSurfaceView = new CustomSurfaceView(getApplicationContext(), glRenderer, CustomSurfaceView.TargetRenderingAPI.OPENGL_ES_3, CustomSurfaceView.TargetRenderingAPI.OPENGL_ES_2);
         driver = new Driver(customSurfaceView, 30);
         setContentView(customSurfaceView);
     }
@@ -158,10 +109,8 @@ public class MainActivity extends Activity implements ImageTrackerListener, Exte
 
             strokedRectangle.setXScale(target.getTargetScale().x);
             strokedRectangle.setYScale(target.getTargetScale().y);
-
-            Log.v(TAG, "X: " + target.getTargetScale().x+" Y: "+target.getTargetScale().x);
-
         }
+        Log.i(TAG, "test");
     }
 
     @Override
